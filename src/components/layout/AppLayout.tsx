@@ -6,7 +6,9 @@ import { BottomBar } from './BottomBar';
 import { NodePalette } from '@/components/palette/NodePalette';
 import { WorkflowCanvas } from '@/components/canvas/WorkflowCanvas';
 import { PropertiesPanel } from '@/components/panels/PropertiesPanel';
+import { HistoryPanel } from '@/components/panels/HistoryPanel';
 import { useWorkflowPersistence } from '@/utils/persistence';
+import { useUndoRedo } from '@/utils/undoRedo';
 
 const PALETTE_WIDTH = 280;
 const PROPERTIES_WIDTH = 320;
@@ -19,6 +21,9 @@ export function AppLayout() {
 
   // Auto-save/load workflow from localStorage
   useWorkflowPersistence();
+
+  // Undo/redo
+  const { canUndo, canRedo, undo, redo } = useUndoRedo();
 
   const topBarHeight = 48;
   const bottomBarHeight = bottomBarOpen ? 36 : 0;
@@ -35,7 +40,7 @@ export function AppLayout() {
       }}
     >
       {/* Top App Bar */}
-      <TopBar />
+      <TopBar canUndo={canUndo} canRedo={canRedo} onUndo={undo} onRedo={redo} />
 
       {/* Main Content Area */}
       <Box
@@ -85,6 +90,9 @@ export function AppLayout() {
           </Box>
         )}
       </Box>
+
+      {/* Execution History Drawer */}
+      <HistoryPanel />
 
       {/* Bottom Status Bar */}
       {bottomBarOpen && <BottomBar />}

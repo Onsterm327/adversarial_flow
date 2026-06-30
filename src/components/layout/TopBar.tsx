@@ -16,16 +16,27 @@ import {
   Stop as StopIcon,
   LightMode as LightIcon,
   DarkMode as DarkIcon,
+  Undo as UndoIcon,
+  Redo as RedoIcon,
+  History as HistoryIcon,
 } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { clearCanvas } from '@/store/slices/flowSlice';
 import { startExecution, resetExecution } from '@/store/slices/executionSlice';
 import { setThemeMode } from '@/store/slices/uiSlice';
+import { toggleHistory, addHistory } from '@/store/slices/historySlice';
 import { executePipeline, mockExecute } from '@/api/execute';
-import { getCardDef } from '@/data/cards';
+import { ExecutionSummary } from '@/types';
 
-export function TopBar() {
+interface TopBarProps {
+  canUndo: boolean;
+  canRedo: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
+}
+
+export function TopBar({ canUndo, canRedo, onUndo, onRedo }: TopBarProps) {
   const theme = useTheme();
   const dispatch = useDispatch();
   const { nodes, edges } = useSelector((state: RootState) => state.flow);
@@ -182,6 +193,7 @@ export function TopBar() {
       },
       onResult: (summary: unknown) => {
         dispatch({ type: 'execution/finishExecution', payload: summary });
+        dispatch(addHistory({ chain: [...chain], summary: summary as ExecutionSummary }));
       },
       onError: (err: string) => {
         dispatch({ type: 'execution/executionError', payload: err });
@@ -230,6 +242,22 @@ export function TopBar() {
           {nodes.length} 节点 | {edges.length} 连线
         </Typography>
 
+        {/* Undo/Redo */}
+        <Tooltip title="撤销 (Ctrl+Z)">
+          <span>
+            <IconButton size="small" onClick={onUndo} disabled={!canUndo}>
+              <UndoIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+        <Tooltip title="重做 (Ctrl+Shift+Z)">
+          <span>
+            <IconButton size="small" onClick={onRedo} disabled={!canRedo}>
+              <RedoIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+
         {/* Actions */}
         <Tooltip title="保存工作流 (JSON)">
           <IconButton size="small" onClick={handleSave} disabled={nodes.length === 0}>
@@ -249,6 +277,13 @@ export function TopBar() {
         <Tooltip title="清空画布">
           <IconButton size="small" onClick={() => dispatch(clearCanvas())} disabled={nodes.length === 0}>
             <ClearIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+
+        {/* History */}
+        <Tooltip title="执行历史">
+          <IconButton size="small" onClick={() => dispatch(toggleHistory())}>
+            <HistoryIcon fontSize="small" />
           </IconButton>
         </Tooltip>
 
