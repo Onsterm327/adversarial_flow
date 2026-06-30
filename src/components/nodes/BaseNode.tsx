@@ -2,7 +2,7 @@ import { memo, ReactNode } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Box, Typography, Paper, useTheme } from '@mui/material';
 import { NodeData } from '@/types';
-import { categoryColors, categoryEmojis, getDisplayCategory } from '@/theme';
+import { categoryColors, categoryEmojis, categoryLabels, getDisplayCategory } from '@/theme';
 
 interface BaseNodeExtra {
   children: ReactNode;
@@ -69,7 +69,7 @@ export const BaseNode = memo(function BaseNode({
             whiteSpace: 'nowrap',
           }}
         >
-          {data.label}
+          {categoryLabels[displayCat] || data.label}
         </Typography>
       </Box>
 

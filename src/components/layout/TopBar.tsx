@@ -27,6 +27,8 @@ import {
   Redo as RedoIcon,
   History as HistoryIcon,
   Dashboard as TemplateIcon,
+  AutoFixHigh as LayoutIcon,
+  Share as ShareIcon,
 } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/store';
@@ -38,6 +40,8 @@ import { toggleHistory, saveHistory } from '@/store/slices/historySlice';
 import { executePipeline, mockExecute } from '@/api/execute';
 import { ExecutionSummary } from '@/types';
 import { TEMPLATES } from '@/data/templates';
+import { autoLayout } from '@/utils/layout';
+import { encodeWorkflow, copyToClipboard } from '@/utils/share';
 
 interface TopBarProps {
   canUndo: boolean;
@@ -54,6 +58,22 @@ export function TopBar({ canUndo, canRedo, onUndo, onRedo }: TopBarProps) {
   const themeMode = useSelector((state: RootState) => state.ui.themeMode);
   const [templateOpen, setTemplateOpen] = useState(false);
   const [validationMsg, setValidationMsg] = useState<string | null>(null);
+  const [shareMsg, setShareMsg] = useState<string | null>(null);
+
+  const handleAutoLayout = () => {
+    if (nodes.length === 0) return;
+    const layouted = autoLayout(nodes, edges);
+    dispatch(loadWorkflow({ nodes: layouted, edges }));
+  };
+
+  const handleShare = async () => {
+    if (nodes.length === 0) return;
+    const encoded = encodeWorkflow(nodes, edges);
+    const url = `${window.location.origin}${window.location.pathname}#${encoded}`;
+    const ok = await copyToClipboard(url);
+    setShareMsg(ok ? '链接已复制到剪贴板' : '复制失败');
+    setTimeout(() => setShareMsg(null), 2000);
+  };
 
   const handleSave = () => {
     const data = JSON.stringify({ nodes, edges }, null, 2);
@@ -296,6 +316,16 @@ export function TopBar({ canUndo, canRedo, onUndo, onRedo }: TopBarProps) {
             <ExportIcon fontSize="small" />
           </IconButton>
         </Tooltip>
+        <Tooltip title="自动布局">
+          <IconButton size="small" onClick={handleAutoLayout} disabled={nodes.length === 0}>
+            <LayoutIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title={shareMsg || '一键分享'}>
+          <IconButton size="small" onClick={handleShare} disabled={nodes.length === 0}>
+            <ShareIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
         <Tooltip title="清空画布">
           <IconButton size="small" onClick={() => dispatch(clearCanvas())} disabled={nodes.length === 0}>
             <ClearIcon fontSize="small" />
@@ -387,10 +417,12 @@ export function TopBar({ canUndo, canRedo, onUndo, onRedo }: TopBarProps) {
                 },
               }}
               onClick={() => {
+                // Auto-layout the template nodes before dispatching
+                const layouted = autoLayout(tpl.nodes, tpl.edges);
                 dispatch(clearCanvas());
-                tpl.nodes.forEach(n => dispatch(addNode(n)));
+                layouted.forEach(n => dispatch(addNode(n)));
                 tpl.edges.forEach(e => {
-                  const sourceNode = tpl.nodes.find(n => n.id === e.source);
+                  const sourceNode = layouted.find(n => n.id === e.source);
                   const edgeStyle = sourceNode ? getEdgeStyle(sourceNode.data) : { text: '', color: '#64748b' };
                   dispatch(addEdge({
                     ...e,

@@ -11,6 +11,8 @@ import { HistoryPanel } from '@/components/panels/HistoryPanel';
 import { useWorkflowPersistence } from '@/utils/persistence';
 import { useUndoRedo } from '@/utils/undoRedo';
 import { loadHistory } from '@/store/slices/historySlice';
+import { loadWorkflow } from '@/store/slices/flowSlice';
+import { decodeWorkflow } from '@/utils/share';
 
 const PALETTE_WIDTH = 280;
 const PROPERTIES_WIDTH = 320;
@@ -27,6 +29,18 @@ export function AppLayout() {
 
   // Load history from backend on mount
   useEffect(() => { dispatch(loadHistory()); }, [dispatch]);
+
+  // Load shared workflow from URL hash on mount
+  useEffect(() => {
+    if (window.location.hash && window.location.hash.length > 1) {
+      const decoded = decodeWorkflow(window.location.hash);
+      if (decoded && decoded.nodes && decoded.nodes.length > 0) {
+        dispatch(loadWorkflow(decoded));
+        // Clear hash after loading
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    }
+  }, [dispatch]);
 
   // Undo/redo
   const { canUndo, canRedo, undo, redo } = useUndoRedo();
