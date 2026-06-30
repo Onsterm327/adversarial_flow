@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -6,6 +7,12 @@ import {
   Tooltip,
   Box,
   useTheme,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Chip,
 } from '@mui/material';
 import {
   Save as SaveIcon,
@@ -19,15 +26,18 @@ import {
   Undo as UndoIcon,
   Redo as RedoIcon,
   History as HistoryIcon,
+  Dashboard as TemplateIcon,
 } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '@/store';
-import { clearCanvas } from '@/store/slices/flowSlice';
+import { RootState, AppDispatch } from '@/store';
+import { clearCanvas, loadWorkflow, addNode, addEdge } from '@/store/slices/flowSlice';
+import { getEdgeStyle } from '@/utils/validation';
 import { startExecution, resetExecution } from '@/store/slices/executionSlice';
 import { setThemeMode } from '@/store/slices/uiSlice';
-import { toggleHistory, addHistory } from '@/store/slices/historySlice';
+import { toggleHistory, saveHistory } from '@/store/slices/historySlice';
 import { executePipeline, mockExecute } from '@/api/execute';
 import { ExecutionSummary } from '@/types';
+import { TEMPLATES } from '@/data/templates';
 
 interface TopBarProps {
   canUndo: boolean;
@@ -38,10 +48,12 @@ interface TopBarProps {
 
 export function TopBar({ canUndo, canRedo, onUndo, onRedo }: TopBarProps) {
   const theme = useTheme();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const { nodes, edges } = useSelector((state: RootState) => state.flow);
   const { isRunning } = useSelector((state: RootState) => state.execution);
   const themeMode = useSelector((state: RootState) => state.ui.themeMode);
+  const [templateOpen, setTemplateOpen] = useState(false);
+  const [validationMsg, setValidationMsg] = useState<string | null>(null);
 
   const handleSave = () => {
     const data = JSON.stringify({ nodes, edges }, null, 2);
@@ -109,13 +121,23 @@ export function TopBar({ canUndo, canRedo, onUndo, onRedo }: TopBarProps) {
       return;
     }
 
-    // Find result node
-    const resultNode = nodes.find(n => {
-      const d = n.data as unknown as { category?: string };
-      return d.category === 'result';
-    });
-    if (!resultNode) {
-      alert('请在工作流中添加一个结果节点');
+    // ── Pipeline validation ─────────────────────────────
+    const getCategory = (n: (typeof nodes)[0]) =>
+      (n.data as unknown as { category?: string }).category;
+
+    const hasDataset = nodes.some(n => getCategory(n) === 'dataset');
+    const hasModel = nodes.some(n => getCategory(n) === 'model');
+    const hasResult = nodes.some(n => getCategory(n) === 'result');
+    const resultCount = nodes.filter(n => getCategory(n) === 'result').length;
+
+    const missing: string[] = [];
+    if (!hasDataset) missing.push('数据集');
+    if (!hasModel) missing.push('模型');
+    if (!hasResult) missing.push('结果');
+    if (resultCount > 1) missing.push('（结果节点超过 1 个）');
+
+    if (missing.length > 0) {
+      setValidationMsg(`缺少必要节点: ${missing.join('、')}\n\n请确保画布上至少有 1 个数据集 + 1 个模型 + 1 个结果节点`);
       return;
     }
 
@@ -193,7 +215,7 @@ export function TopBar({ canUndo, canRedo, onUndo, onRedo }: TopBarProps) {
       },
       onResult: (summary: unknown) => {
         dispatch({ type: 'execution/finishExecution', payload: summary });
-        dispatch(addHistory({ chain: [...chain], summary: summary as ExecutionSummary }));
+        dispatch(saveHistory({ chain: [...chain], summary: summary as ExecutionSummary }));
       },
       onError: (err: string) => {
         dispatch({ type: 'execution/executionError', payload: err });
@@ -297,6 +319,13 @@ export function TopBar({ canUndo, canRedo, onUndo, onRedo }: TopBarProps) {
           </IconButton>
         </Tooltip>
 
+        {/* Templates */}
+        <Tooltip title="工作流模板">
+          <IconButton size="small" onClick={() => setTemplateOpen(true)}>
+            <TemplateIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+
         {/* Execute button */}
         <Box sx={{ ml: 2 }}>
           <Tooltip title={isRunning ? '停止' : '执行工作流'}>
@@ -320,6 +349,75 @@ export function TopBar({ canUndo, canRedo, onUndo, onRedo }: TopBarProps) {
           </Tooltip>
         </Box>
       </Toolbar>
+
+      {/* Validation error dialog */}
+      <Dialog open={!!validationMsg} onClose={() => setValidationMsg(null)} maxWidth="xs">
+        <DialogTitle sx={{ fontSize: '0.95rem', color: 'warning.main', display: 'flex', alignItems: 'center', gap: 1 }}>
+          ⚠️ 工作流不完整
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>{validationMsg}</Typography>
+          <Box sx={{ mt: 2, display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+            <Chip label="📦 数据集" size="small" variant="outlined" sx={{ height: 22 }} />
+            <Chip label="🧠 模型" size="small" variant="outlined" sx={{ height: 22 }} />
+            <Chip label="📊 结果" size="small" variant="outlined" sx={{ height: 22 }} />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setValidationMsg(null)} variant="contained" size="small">知道了</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Template dialog */}
+      <Dialog open={templateOpen} onClose={() => setTemplateOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontSize: '0.95rem' }}>工作流模板</DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 1, pt: 0.5 }}>
+          {TEMPLATES.map(tpl => (
+            <Box
+              key={tpl.key}
+              sx={{
+                p: 1.5,
+                borderRadius: 2,
+                border: `1px solid ${theme.palette.divider}`,
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+                '&:hover': {
+                  borderColor: theme.palette.primary.main,
+                  backgroundColor: theme.palette.action.hover,
+                },
+              }}
+              onClick={() => {
+                dispatch(clearCanvas());
+                tpl.nodes.forEach(n => dispatch(addNode(n)));
+                tpl.edges.forEach(e => {
+                  const sourceNode = tpl.nodes.find(n => n.id === e.source);
+                  const edgeStyle = sourceNode ? getEdgeStyle(sourceNode.data) : { text: '', color: '#64748b' };
+                  dispatch(addEdge({
+                    ...e,
+                    label: edgeStyle.text || undefined,
+                    style: { stroke: edgeStyle.color, strokeWidth: 2 },
+                    labelStyle: { fill: edgeStyle.color, fontWeight: 500, fontSize: 11 },
+                    labelBgStyle: { fill: '#1e293b', fillOpacity: 0.9 },
+                    labelBgPadding: [8, 4] as [number, number],
+                    labelBgBorderRadius: 4,
+                    markerEnd: { type: 'arrowclosed' as const, color: edgeStyle.color, width: 16, height: 16 },
+                  }));
+                });
+                setTemplateOpen(false);
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>{tpl.name}</Typography>
+                <Chip label={`${tpl.nodes.length} 节点`} size="small" sx={{ height: 18, fontSize: '0.6rem' }} />
+              </Box>
+              <Typography variant="caption" color="text.secondary">{tpl.description}</Typography>
+            </Box>
+          ))}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setTemplateOpen(false)} size="small">关闭</Button>
+        </DialogActions>
+      </Dialog>
     </AppBar>
   );
 }

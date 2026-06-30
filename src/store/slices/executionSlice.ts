@@ -26,7 +26,8 @@ const executionSlice = createSlice({
     },
     updateStep(state, action: PayloadAction<{ message: string; progress: number }>) {
       state.currentStep = action.payload.message;
-      state.progress = action.payload.progress;
+      // Only increase — backend may send fluctuating values
+      state.progress = Math.max(state.progress, action.payload.progress);
     },
     updateMetricBatch(state, action: PayloadAction<{ metrics: AttackMetric[]; totalSamples: number }>) {
       for (const m of action.payload.metrics) {

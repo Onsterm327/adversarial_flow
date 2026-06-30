@@ -1,6 +1,7 @@
+import { useEffect } from 'react';
 import { Box, useTheme } from '@mui/material';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, AppDispatch } from '@/store';
 import { TopBar } from './TopBar';
 import { BottomBar } from './BottomBar';
 import { NodePalette } from '@/components/palette/NodePalette';
@@ -9,18 +10,23 @@ import { PropertiesPanel } from '@/components/panels/PropertiesPanel';
 import { HistoryPanel } from '@/components/panels/HistoryPanel';
 import { useWorkflowPersistence } from '@/utils/persistence';
 import { useUndoRedo } from '@/utils/undoRedo';
+import { loadHistory } from '@/store/slices/historySlice';
 
 const PALETTE_WIDTH = 280;
 const PROPERTIES_WIDTH = 320;
 
 export function AppLayout() {
   const theme = useTheme();
+  const dispatch = useDispatch<AppDispatch>();
   const { paletteOpen, propertiesOpen, bottomBarOpen } = useSelector(
     (state: RootState) => state.ui
   );
 
   // Auto-save/load workflow from localStorage
   useWorkflowPersistence();
+
+  // Load history from backend on mount
+  useEffect(() => { dispatch(loadHistory()); }, [dispatch]);
 
   // Undo/redo
   const { canUndo, canRedo, undo, redo } = useUndoRedo();
