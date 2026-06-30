@@ -28,7 +28,7 @@ export function NodeConfig({ node, onDelete }: Props) {
   const theme = useTheme();
   const dispatch = useDispatch();
   const data = node.data;
-  const color = categoryColors[data.category] || '#64748b';
+  const color = categoryColors[getDisplayCategory(data)] || '#64748b';
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>

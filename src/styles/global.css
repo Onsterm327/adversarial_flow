@@ -85,14 +85,24 @@ body,
   border: 1px solid rgba(99, 102, 241, 0.4);
 }
 
-/* ── MiniMap & Controls styling ─────────────────────────────── */
-.react-flow__minimap {
-  border-radius: 8px !important;
+/* ── Controls buttons: dark theme ──────────────────────────── */
+[data-theme="dark"] .react-flow__controls-button {
+  background-color: #1e293b;
+  border-bottom: 1px solid #334155;
+  fill: #94a3b8;
+}
+[data-theme="dark"] .react-flow__controls-button:hover {
+  background-color: #334155;
 }
 
-.react-flow__controls {
-  border-radius: 8px !important;
-  overflow: hidden !important;
+/* ── Controls buttons: light theme ─────────────────────────── */
+[data-theme="light"] .react-flow__controls-button {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  fill: #64748b;
+}
+[data-theme="light"] .react-flow__controls-button:hover {
+  background-color: #f1f5f9;
 }
 
 /* ── Drag ghost ────────────────────────────────────────────── */

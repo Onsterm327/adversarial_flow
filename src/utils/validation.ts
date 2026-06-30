@@ -144,10 +144,10 @@ const EDGE_LABELS: Record<string, { text: string; color: string }> = {
   dataset: { text: '提供数据', color: '#3b82f6' },
   attack: { text: '生成对抗样本', color: '#f59e0b' },
   model: { text: '推理', color: '#22c55e' },
-  'defense-input_reconstruction': { text: '清除噪声', color: '#a855f7' },
-  'defense-adversarial_training': { text: '提高鲁棒性', color: '#a855f7' },
-  'defense-active_defense': { text: '欺骗攻击者', color: '#a855f7' },
-  'defense-ensemble_defense': { text: '架构稳固', color: '#a855f7' },
+  'defense-input_reconstruction': { text: '清除噪声', color: '#06b6d4' },
+  'defense-adversarial_training': { text: '提高鲁棒性', color: '#10b981' },
+  'defense-active_defense': { text: '欺骗攻击者', color: '#f97316' },
+  'defense-ensemble_defense': { text: '架构稳固', color: '#8b5cf6' },
 };
 
 export function getEdgeStyle(sourceData: NodeData): { text: string; color: string } {

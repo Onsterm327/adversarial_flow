@@ -2,7 +2,7 @@ import { memo, ReactNode } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Box, Typography, Paper, useTheme } from '@mui/material';
 import { NodeData } from '@/types';
-import { categoryColors, categoryEmojis } from '@/theme';
+import { categoryColors, categoryEmojis, getDisplayCategory } from '@/theme';
 
 interface BaseNodeExtra {
   children: ReactNode;
@@ -25,8 +25,9 @@ export const BaseNode = memo(function BaseNode({
 }: BaseNodeProps) {
   const data = rawData as unknown as NodeData;
   const theme = useTheme();
-  const accentColor = color || categoryColors[data.category] || '#64748b';
-  const emoji = categoryEmojis[data.category] || '';
+  const displayCat = getDisplayCategory(data);
+  const accentColor = color || categoryColors[displayCat] || '#64748b';
+  const emoji = categoryEmojis[displayCat] || '';
 
   return (
     <Paper

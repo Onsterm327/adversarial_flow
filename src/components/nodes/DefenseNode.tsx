@@ -44,7 +44,7 @@ export const DefenseNode = memo(function DefenseNode(props: NodeProps) {
   };
 
   return (
-    <BaseNode {...props} hasTarget={hasTarget} hasSource={hasSource} color="#a855f7">
+    <BaseNode {...props} hasTarget={hasTarget} hasSource={hasSource}>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
         <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
           <Chip
@@ -52,7 +52,7 @@ export const DefenseNode = memo(function DefenseNode(props: NodeProps) {
             label={data.label}
             size="small"
             variant="outlined"
-            color="secondary"
+            color={subtypeColors[subtype] || 'secondary'}
             sx={{ height: 24, fontSize: '0.7rem' }}
           />
           <Chip

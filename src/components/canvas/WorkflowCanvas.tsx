@@ -23,7 +23,7 @@ import {
 } from '@/store/slices/flowSlice';
 import { NodeData } from '@/types';
 import { isValidConnection, getEdgeStyle } from '@/utils/validation';
-import { getCardDef } from '@/data/cards';
+import { categoryColors, getDisplayCategory } from '@/theme';
 import { DatasetNode } from '@/components/nodes/DatasetNode';
 import { ModelNode } from '@/components/nodes/ModelNode';
 import { AttackNode } from '@/components/nodes/AttackNode';
@@ -47,7 +47,11 @@ export function WorkflowCanvas() {
   const dispatch = useDispatch();
   const { nodes, edges } = useSelector((state: RootState) => state.flow);
   const themeMode = useSelector((state: RootState) => state.ui.themeMode);
-  const bgColor = themeMode === 'light' ? '#f8fafc' : '#0f172a';
+  const isLight = themeMode === 'light';
+  const bgColor = isLight ? '#f8fafc' : '#0f172a';
+  const panelBg = isLight ? '#ffffff' : '#1e293b';
+  const panelBorder = isLight ? '#e2e8f0' : '#334155';
+  const dotColor = isLight ? '#cbd5e1' : '#334155';
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
 
@@ -171,7 +175,7 @@ export function WorkflowCanvas() {
   );
 
   return (
-    <div ref={reactFlowWrapper} style={{ width: '100%', height: '100%' }}>
+    <div ref={reactFlowWrapper} style={{ width: '100%', height: '100%' }} data-theme={themeMode}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -198,29 +202,33 @@ export function WorkflowCanvas() {
           variant={BackgroundVariant.Dots}
           gap={20}
           size={1}
-          color="#334155"
+          color={dotColor}
         />
         <Controls
           showInteractive={false}
           position="bottom-right"
-          style={{ display: 'flex' }}
+          style={{
+            display: 'flex',
+            border: `1px solid ${panelBorder}`,
+            borderRadius: 8,
+            overflow: 'hidden',
+          }}
         />
         <MiniMap
           position="bottom-left"
-          style={{ width: 160, height: 100 }}
+          style={{
+            width: 160,
+            height: 100,
+            backgroundColor: panelBg,
+            border: `1px solid ${panelBorder}`,
+            borderRadius: 8,
+          }}
           nodeColor={(node) => {
             const data = node.data as NodeData | undefined;
             if (!data) return '#64748b';
-            const colors: Record<string, string> = {
-              dataset: '#3b82f6',
-              model: '#22c55e',
-              attack: '#f59e0b',
-              defense: '#a855f7',
-              result: '#ec4899',
-            };
-            return colors[data.category] || '#64748b';
+            return categoryColors[getDisplayCategory(data)] || '#64748b';
           }}
-          maskColor="rgba(15, 23, 42, 0.6)"
+          maskColor={isLight ? 'rgba(248, 250, 252, 0.6)' : 'rgba(15, 23, 42, 0.6)'}
         />
       </ReactFlow>
     </div>
