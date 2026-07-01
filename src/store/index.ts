@@ -3,6 +3,7 @@ import flowReducer from './slices/flowSlice';
 import executionReducer from './slices/executionSlice';
 import uiReducer from './slices/uiSlice';
 import historyReducer from './slices/historySlice';
+import queueReducer from './slices/queueSlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     execution: executionReducer,
     ui: uiReducer,
     history: historyReducer,
+    queue: queueReducer,
   },
 });
 

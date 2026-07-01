@@ -26,6 +26,18 @@ import { RootState, AppDispatch } from '@/store';
 import { toggleHistory, deleteHistory, clearHistoryAsync, toggleSelect, clearSelection, openCompare } from '@/store/slices/historySlice';
 import { HistoryEntry } from '@/store/slices/historySlice';
 import { ComparisonDialog } from './ComparisonDialog';
+import { ExecutionSummary, AttackMetric } from '@/types';
+
+/** Normalize metrics to array (handles both old Record format and new array format) */
+function getMetricsArray(summary: ExecutionSummary): AttackMetric[] {
+  if (Array.isArray(summary.metrics)) return summary.metrics;
+  if (summary.metrics && typeof summary.metrics === 'object') {
+    return Object.entries(summary.metrics as Record<string, number>).map(([name, accuracy]) => ({
+      name, accuracy, samples: summary.totalSamples || 0,
+    }));
+  }
+  return [];
+}
 
 // ── Chain item → color mapping ──────────────────────────────
 
@@ -273,7 +285,7 @@ function HistoryEntryCard({ entry }: { entry: HistoryEntry }) {
 
       {/* Metrics */}
       <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-        {entry.summary.metrics.map(m => {
+        {getMetricsArray(entry.summary).map(m => {
           const color =
             m.accuracy >= 80 ? '#22c55e' :
             m.accuracy >= 50 ? '#eab308' :
@@ -311,7 +323,7 @@ function HistoryEntryCard({ entry }: { entry: HistoryEntry }) {
           <Box sx={{ mt: 1 }}>
             <Typography variant="caption" color="text.disabled">{time}</Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.25, mt: 0.5 }}>
-              {entry.summary.metrics.map(m => (
+              {getMetricsArray(entry.summary).map(m => (
                 <Chip key={m.name} label={`${m.name} ${m.accuracy.toFixed(1)}%`} size="small" sx={{ height: 18, fontSize: '0.6rem' }} />
               ))}
             </Box>

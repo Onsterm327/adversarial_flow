@@ -37,6 +37,7 @@ export interface ExecutionState {
   currentStep: string;
   metrics: AttackMetric[];
   totalSamples: number;
+  startTime: number;
   error: string | null;
   summary: ExecutionSummary | null;
 }

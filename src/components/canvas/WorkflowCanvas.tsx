@@ -29,6 +29,7 @@ import { ModelNode } from '@/components/nodes/ModelNode';
 import { AttackNode } from '@/components/nodes/AttackNode';
 import { DefenseNode } from '@/components/nodes/DefenseNode';
 import { ResultNode } from '@/components/nodes/ResultNode';
+import { QueueIndicator } from './QueueIndicator';
 
 const nodeTypes = {
   dataset: DatasetNode,
@@ -176,6 +177,7 @@ export function WorkflowCanvas() {
 
   return (
     <div ref={reactFlowWrapper} style={{ width: '100%', height: '100%' }} data-theme={themeMode}>
+      <QueueIndicator />
       <ReactFlow
         nodes={nodes}
         edges={edges}

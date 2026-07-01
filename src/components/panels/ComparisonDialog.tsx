@@ -21,12 +21,26 @@ import { HistoryEntry } from '@/store/slices/historySlice';
 
 const BAR_COLORS = ['#6366f1', '#f59e0b', '#22c55e', '#ef4444', '#06b6d4', '#a855f7', '#ec4899', '#f97316'];
 
+// Normalize metrics: handle both Record<string,number> (old) and array (new) formats
+function toArray(metrics: unknown, totalSamples: number): { name: string; accuracy: number; samples: number }[] {
+  if (Array.isArray(metrics)) return metrics as { name: string; accuracy: number; samples: number }[];
+  if (metrics && typeof metrics === 'object') {
+    return Object.entries(metrics as Record<string, number>).map(([name, accuracy]) => ({
+      name, accuracy, samples: totalSamples,
+    }));
+  }
+  return [];
+}
+
 export function ComparisonDialog() {
   const theme = useTheme();
   const dispatch = useDispatch<AppDispatch>();
   const { entries, selectedIds, compareOpen } = useSelector((state: RootState) => state.history);
 
-  const selected = entries.filter(e => selectedIds.includes(e.id));
+  const selected = entries.filter(e => selectedIds.includes(e.id)).map(e => ({
+    ...e,
+    summary: { ...e.summary, metrics: toArray(e.summary.metrics, e.summary.totalSamples) },
+  }));
   if (selected.length < 2) return null;
 
   // ── Validation: same dataset + same attacks ──────────────

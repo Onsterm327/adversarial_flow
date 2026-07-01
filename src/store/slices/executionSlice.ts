@@ -7,6 +7,7 @@ const initialState: ExecutionState = {
   currentStep: '',
   metrics: [],
   totalSamples: 1000,
+  startTime: 0,
   error: null,
   summary: null,
 };
@@ -21,6 +22,7 @@ const executionSlice = createSlice({
       state.currentStep = '初始化...';
       state.metrics = [];
       state.totalSamples = 1000;
+      state.startTime = Date.now();
       state.error = null;
       state.summary = null;
     },

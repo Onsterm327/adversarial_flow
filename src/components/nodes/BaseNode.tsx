@@ -10,6 +10,8 @@ interface BaseNodeExtra {
   hasSource?: boolean;
   color?: string;
   maxWidth?: number;
+  minWidth?: number;
+  headerRight?: ReactNode;
 }
 
 type BaseNodeProps = NodeProps & BaseNodeExtra;
@@ -22,6 +24,8 @@ export const BaseNode = memo(function BaseNode({
   hasSource = true,
   color,
   maxWidth,
+  minWidth,
+  headerRight,
 }: BaseNodeProps) {
   const data = rawData as unknown as NodeData;
   const theme = useTheme();
@@ -33,7 +37,7 @@ export const BaseNode = memo(function BaseNode({
     <Paper
       elevation={selected ? 8 : 2}
       sx={{
-        minWidth: 180,
+        minWidth: minWidth ?? 180,
         maxWidth: maxWidth ?? 240,
         borderRadius: 2,
         overflow: 'visible',
@@ -71,6 +75,7 @@ export const BaseNode = memo(function BaseNode({
         >
           {categoryLabels[displayCat] || data.label}
         </Typography>
+        {headerRight}
       </Box>
 
       {/* Card body */}
